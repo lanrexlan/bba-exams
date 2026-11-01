@@ -1,41 +1,64 @@
-# Baobab Digital Academy — GCSE Mock Exam Centre
+# Baobab Digital Academy — Assessment Centre
 
-Timed, online GCSE mock exams in the style of Pearson Edexcel, for Baobab Digital Academy students.
-Static site (plain HTML + JavaScript, no build step) on Vercel, backed by the academy's live Supabase project.
+Timed online assessments for every year group (six a year, one every two months) and GCSE mocks for each exam board.
+Live at https://exams.baobabonlineacademy.com (also https://bba-exams.vercel.app).
 
-## How it works
+Plain HTML and JavaScript with no build step, hosted on Vercel, backed by the academy's live Supabase project (`Baobab_Digital_Academy`).
+
+## Who can do what
 
 | Who | Signs in with | Can |
 | --- | --- | --- |
-| Students (Years 10–11) | Google, using their `@baobabonlineacademy.com` account (the child's `meet_email`) | Sit open papers they are entered for, upload photos of working, see their own attempts |
-| Tutors | Email + password (tutor portal login) | Open and close papers, watch and unlock **their own students**, mark their scripts |
-| Admins | Email + password (admin portal login) | Everything tutors can, for all students, plus enter candidates, set extra time and change settings |
+| Students | Google, with their `@baobabonlineacademy.com` account (the child's `meet_email`) | Sit open papers meant for them, add photos of working, see released results |
+| Tutors | Portal email and password (plus two-step code if required) | Open and close papers, watch, unlock and add time for **their own students**, mark their scripts |
+| Admins | Portal email and password (plus two-step code if required) | Everything tutors can, for all students, plus papers, calendar, entries, extra time, settings and resets |
 
-Every rule is enforced in the database, not the browser:
+## Which papers a student sees
 
-- Students only see a paper's questions while it is open **and** they are entered for its subject and tier.
-- Mark schemes are readable by staff only.
-- The server sets the deadline at start (with any extra time) and refuses saves after it. A cron job auto-submits papers whose time ran out while the student was away.
-- Strict mode is counted on the server: exits are logged, and the paper locks after the set number. Only a teacher of that student, or an admin, can unlock.
-- Photos of working go to the private `exam-working` bucket, under `<child_id>/<attempt_id>/`. Uploads are accepted only while sitting and for a set number of minutes after submitting.
+A paper has year groups, a subject, and optionally an exam board and tier.
+
+- **Regular assessments** (no board or tier): every student in those year groups who is taught that subject (from `teacher_student_assignments`) sees it while it is open.
+- **Mocks** (board and/or tier set): only students entered for that subject with the same board and tier (Students page → Mock entries).
+
+## Security
+
+Enforced in the database:
+
+- Students have **no direct access** to any exam table. They use functions that check who they are on every call.
+- Questions are only sent after a student starts a paper, and only while their sitting is in progress. Mark schemes are staff-only.
+- The server sets each deadline (with extra time), refuses late saves, and a cron job hands in papers whose time ran out.
+- **One device per sitting.** A sitting is tied to the browser session that started it; opening it anywhere else locks it until staff unlock it.
+- Exits (tab, app, window, full screen) are counted on the server; the paper locks after the set number.
+- Saves are refused once a paper has been locked for 15 seconds.
+- Tutors only see their own students; admins see everyone. Optional **two-step sign-in** for all staff (Settings).
+- An append-only **activity log** records starts, exits, locks, unlocks, devices, time added, resets, marks and every admin change, with IP address and browser. Nobody can edit or delete it from the app.
+- Photos go to a private bucket under `<child_id>/<attempt_id>/`, only while sitting or shortly after, up to a set limit per paper. They are re-encoded in the browser, which strips location and device data.
+- Signed-out visitors have no access to anything.
+
+In the browser:
+
+- Strict Content Security Policy: scripts, fonts and styles come only from this site, and connections go only to Supabase. The Supabase library and fonts are hosted here, not loaded from other sites. There are no inline scripts.
+- Pages can't be framed by other sites; HSTS, no referrer, locked-down browser permissions.
+- Sessions are kept per tab (sessionStorage) and use PKCE for Google sign-in. Staff are signed out after a set idle time, and repeated wrong passwords pause sign-in.
+- During a paper: full screen, copy, paste, right-click, drag-and-drop and print are blocked. A watermark with the student's name is shown. Second screens and split screens are detected and reported. A heartbeat every 20 seconds tells staff who is online.
+- Question papers, mark schemes and database files are never deployed (`.vercelignore`).
+
+Camera monitoring stays in Google Meet.
+
+## Adding a paper
+
+Admins: Papers → Add a paper. Fill in the details and choose a JSON file with `questions` and `scheme`. See `papers/TEMPLATE-assessment.upload.json` for a small example and `papers/1MA1-1H.upload.json` for a full GCSE paper. Part `type` is `maths` (working and answer boxes), `short` (answer box) or `long` (essay box with word count). Total marks are worked out from the parts.
 
 ## Files
 
 | Path | What it is |
 | --- | --- |
 | `index.html`, `app.js`, `styles.css`, `config.js` | The app |
-| `assets/` | Baobab logo files |
-| `supabase/migrations/20261101170000_exam_centre.sql` | All `exam_*` tables, policies, functions, the storage bucket and the cron job (already applied to the live project) |
-| `supabase/seed_1MA1-1H.sql` | Loads Maths Paper 1H and its mark scheme (already applied) |
-| `papers/` | Paper and mark-scheme source files (JSON) |
+| `vendor/`, `fonts/`, `assets/` | Supabase library, fonts (SIL Open Font License) and logo, hosted here |
+| `vercel.json`, `.vercelignore` | Security headers, caching, and what is never deployed |
+| `supabase/migrations/` | Everything in the database that starts with `exam_` (already applied to the live project) |
+| `papers/` | Paper and mark-scheme sources (not deployed) |
 
-## One-time setup
+## Setup already done
 
-1. **Turn on Google sign-in in Supabase.** In Google Cloud, create an OAuth client (type Web application) with this authorised redirect URI: `https://vcxdkacxbjsgaoxbhsip.supabase.co/auth/v1/callback`. In Supabase, open Authentication → Sign In / Providers → Google, turn it on, and paste the client ID and secret.
-2. **Deploy on Vercel.** Import this repository as a new project. Framework preset: Other. No build command, output directory `.`.
-3. **Allow the site's address in Supabase.** In Authentication → URL Configuration, add the Vercel address (for example `https://bba-exams.vercel.app`, plus your custom domain if you add one) to Redirect URLs.
-4. **Enter candidates.** Sign in as an admin, open Candidates, press "Enter for mocks" for each student, then choose their subjects and tiers.
-
-## Adding a paper
-
-Add `papers/<id>.paper.json` and `papers/<id>.scheme.json`, then insert them into `exam_papers` and `exam_schemes` as `supabase/seed_1MA1-1H.sql` does. Question part types are `maths` (working + answer), `short` (answer only) and `long` (essay box with word count).
+Google sign-in is turned on in Supabase. The site address is listed under Authentication → URL Configuration → Redirect URLs. The Site URL stays as the tutor portal, because the tutor app's emails rely on it.

@@ -1,0 +1,7 @@
+# Never publish question papers, mark schemes, database code or notes on the website.
+papers
+supabase
+scripts
+README.md
+*.sql
+*.json.bak

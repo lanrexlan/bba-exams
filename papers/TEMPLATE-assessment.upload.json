@@ -1,0 +1,80 @@
+{
+ "instructions": [
+  "Answer all the questions.",
+  "Show your working."
+ ],
+ "information": [
+  "The marks for each question are shown in brackets."
+ ],
+ "questions": [
+  {
+   "n": "1",
+   "parts": [
+    {
+     "id": "1a",
+     "label": "(a)",
+     "text": "Work out 345 + 278",
+     "marks": 1,
+     "type": "short"
+    },
+    {
+     "id": "1b",
+     "label": "(b)",
+     "text": "Work out 52 × 7",
+     "marks": 2,
+     "type": "maths"
+    }
+   ]
+  },
+  {
+   "n": "2",
+   "intro": "Read the sentence below.\n*The small cat slept on the warm mat.*",
+   "parts": [
+    {
+     "id": "2",
+     "label": "",
+     "text": "Write down the two adjectives in the sentence.",
+     "marks": 2,
+     "type": "short"
+    }
+   ]
+  },
+  {
+   "n": "3",
+   "parts": [
+    {
+     "id": "3",
+     "label": "",
+     "text": "Write a paragraph describing your favourite place.",
+     "marks": 6,
+     "type": "long",
+     "rows": 10
+    }
+   ]
+  }
+ ],
+ "scheme": [
+  {
+   "part": "1a",
+   "answer": "623",
+   "codes": "B1"
+  },
+  {
+   "part": "1b",
+   "working": "50 × 7 = 350, 2 × 7 = 14",
+   "answer": "364",
+   "codes": "M1 A1"
+  },
+  {
+   "part": "2",
+   "answer": "small, warm",
+   "codes": "B1 B1",
+   "notes": "One mark for each adjective."
+  },
+  {
+   "part": "3",
+   "answer": "Levels: 5–6 vivid detail and varied sentences; 3–4 clear description; 1–2 simple description",
+   "codes": "L1–L3"
+  }
+ ]
+}
